@@ -14,8 +14,14 @@ type Data struct {
 	Name     string  `json:"name"`
 	Path     string  `json:"path"`
 	Size     int64   `json:"size"`
+	Changes  Changes `json:"changes"`
 	Repr     string  `json:"repr,omitempty"`
 	Children []*Data `json:"children,omitempty"`
+}
+
+type Changes struct {
+	Addition int `json:"addition"`
+	Deletion int `json:"deletion"`
 }
 
 type ParseOpts struct {
@@ -23,5 +29,3 @@ type ParseOpts struct {
 	ExcludeGlobs []string
 	ExcludePaths []string
 }
-
-type WalkFunc func(data *Data, args ...interface{}) error

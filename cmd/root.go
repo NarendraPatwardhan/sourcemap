@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	cctx "machinelearning.one/sourcemap/compose/context"
@@ -37,8 +39,29 @@ var rootCmd = &cobra.Command{
 
 		for _, commit := range repo {
 			lg.Info().Msgf("commit %s: %s", commit.Hash, commit.Message)
+			print(*commit.Data, 0)
 		}
 	},
+}
+
+func print(data core.Data, indent int) {
+	fmt.Printf(
+		"%s%s : %d\n",
+		indentStr(indent),
+		data.Name,
+		data.Size,
+	)
+	for _, child := range data.Children {
+		print(*child, indent+1)
+	}
+}
+
+func indentStr(indent int) string {
+	var str string
+	for i := 0; i < indent; i++ {
+		str += "  "
+	}
+	return str
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
