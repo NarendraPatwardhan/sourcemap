@@ -29,11 +29,15 @@ var rootCmd = &cobra.Command{
 		lg.Trace().Msgf("using exclude paths %v", excludePaths)
 
 		lg.Debug().Msgf("parsing %s", addr)
-		core.Parse(ctx, addr, core.ParseOpts{
+		repo := core.Parse(ctx, addr, core.ParseOpts{
 			Limit:        limit,
 			ExcludeGlobs: excludeGlobs,
 			ExcludePaths: excludePaths,
 		})
+
+		for _, commit := range repo {
+			lg.Info().Msgf("commit %s: %s", commit.Hash, commit.Message)
+		}
 	},
 }
 
