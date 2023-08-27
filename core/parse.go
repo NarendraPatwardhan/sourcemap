@@ -10,6 +10,7 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 
 	"machinelearning.one/sourcemap/compose/logger"
+	"machinelearning.one/sourcemap/core/ext"
 )
 
 func Parse(ctx context.Context, addr string, opts ParseOpts) Repository {
@@ -122,6 +123,7 @@ func extract(
 		child := &Data{
 			Name: entry.Name,
 			Path: path + entry.Name,
+			Repr: ext.Get(entry.Name),
 		}
 
 		isFile := entry.Mode.IsFile()
