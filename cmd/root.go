@@ -46,10 +46,12 @@ var rootCmd = &cobra.Command{
 
 func print(data core.Data, indent int) {
 	fmt.Printf(
-		"%s%s : %d\n",
+		"%s%s : %d +%d -%d\n",
 		indentStr(indent),
 		data.Name,
 		data.Size,
+		data.Changes.Addition,
+		data.Changes.Deletion,
 	)
 	for _, child := range data.Children {
 		print(*child, indent+1)

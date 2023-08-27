@@ -13,9 +13,14 @@ import (
 func Parse(ctx context.Context, addr string, opts ParseOpts) Repository {
 	lg := logger.Get(ctx)
 
+	depth := opts.Limit
+	if depth != 0 {
+		depth += 1 // Fetch an extra commit to obtain changes
+	}
+
 	r, err := git.CloneContext(ctx, memory.NewStorage(), nil, &git.CloneOptions{
 		URL:   addr,
-		Depth: opts.Limit,
+		Depth: depth,
 	})
 	if err != nil {
 		lg.Fatal().Err(err).Msg("failed to clone repository")
@@ -35,10 +40,30 @@ func Parse(ctx context.Context, addr string, opts ParseOpts) Repository {
 
 	queue := make([]*object.Commit, 0)
 	queue = append(queue, co)
+	seen := 0
 
 	for len(queue) > 0 {
 		co := queue[0]
 		queue = queue[1:]
+		seen += 1
+
+		if opts.Limit != 0 && seen > opts.Limit {
+			break
+		}
+
+		stats, err := co.Stats()
+		if err != nil {
+			lg.Warn().
+				Err(err).
+				Msgf("failed to get stats for %s", co.Hash.String())
+		}
+		statsLookup := make(map[string]Changes, len(stats))
+		for _, stat := range stats {
+			statsLookup[stat.Name] = Changes{
+				Addition: stat.Addition,
+				Deletion: stat.Deletion,
+			}
+		}
 
 		commit := &Commit{
 			Hash:    co.Hash.String(),
@@ -59,7 +84,7 @@ func Parse(ctx context.Context, addr string, opts ParseOpts) Repository {
 		}
 
 		extract(ctx, data, tree, data.Path, opts.ExcludeGlobs, opts.ExcludePaths)
-		finalize(ctx, data)
+		finalize(ctx, data, statsLookup)
 
 		commit.Data = data
 
@@ -82,15 +107,19 @@ func extract(
 ) {
 	lg := logger.Get(ctx)
 
+	if path != "" {
+		path += "/"
+	}
+
 	for _, entry := range tree.Entries {
-		path := path + "/" + entry.Name
+
 		if filter(path, excludeGlobs, excludePaths) {
 			continue
 		}
 
 		child := &Data{
 			Name: entry.Name,
-			Path: path,
+			Path: path + entry.Name,
 		}
 
 		isFile := entry.Mode.IsFile()
@@ -112,7 +141,7 @@ func extract(
 				continue
 			}
 
-			extract(ctx, child, tree, path, excludeGlobs, excludePaths)
+			extract(ctx, child, tree, path+entry.Name, excludeGlobs, excludePaths)
 		}
 
 		data.Children = append(data.Children, child)
@@ -123,9 +152,16 @@ func filter(path string, excludeGlobs, excludePaths []string) bool {
 	return false
 }
 
-func finalize(ctx context.Context, data *Data) {
+func finalize(ctx context.Context, data *Data, stats map[string]Changes) {
 	for _, child := range data.Children {
-		finalize(ctx, child)
+		finalize(ctx, child, stats)
 		data.Size += child.Size
+		changes, ok := stats[child.Path]
+		if ok {
+			child.Changes.Addition = changes.Addition
+			child.Changes.Deletion = changes.Deletion
+			data.Changes.Addition += changes.Addition
+			data.Changes.Deletion += changes.Deletion
+		}
 	}
 }
