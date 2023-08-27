@@ -11,9 +11,10 @@ type Commit struct {
 }
 
 type Data struct {
-	Name     string  `json:"name"`
-	Path     string  `json:"path"`
-	Size     int64   `json:"size"`
+	Name     string `json:"name"`
+	Path     string `json:"path"`
+	size     int64
+	Size     string  `json:"size"`
 	Changes  Changes `json:"changes"`
 	Repr     string  `json:"repr,omitempty"`
 	Children []*Data `json:"children,omitempty"`

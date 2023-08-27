@@ -2,6 +2,8 @@ package core
 
 import (
 	"context"
+	"fmt"
+	"math"
 	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
@@ -136,7 +138,7 @@ func extract(
 				continue
 			}
 
-			child.Size = blob.Size
+			child.size = blob.Size
 		} else {
 
 			child.Children = make([]*Data, 0)
@@ -185,7 +187,7 @@ func filter(ctx context.Context, path string, excludeGlobs, excludePaths []strin
 func gather(ctx context.Context, data *Data, stats map[string]Changes) {
 	for _, child := range data.Children {
 		gather(ctx, child, stats)
-		data.Size += child.Size
+		data.size += child.size
 		changes, ok := stats[child.Path]
 		if ok {
 			child.Changes.Addition = changes.Addition
@@ -194,4 +196,23 @@ func gather(ctx context.Context, data *Data, stats map[string]Changes) {
 			data.Changes.Deletion += changes.Deletion
 		}
 	}
+	data.Size = humanReadableSize(data.size)
+}
+
+func humanReadableSize(size int64) string {
+	suf := []string{"B", "KB", "MB", "GB"}
+
+	if size == 0 {
+		return "0" + suf[0]
+	}
+
+	logIndex := math.Log(float64(size)) / math.Log(1024)
+	index := int(math.Floor(logIndex))
+
+	if index >= len(suf) || index == 0 {
+		// Return the size in bytes
+		return fmt.Sprintf("%d %s", size, suf[0])
+	}
+
+	return fmt.Sprintf("%.2f %s", float64(size)/math.Pow(1024, float64(index)), suf[index])
 }
