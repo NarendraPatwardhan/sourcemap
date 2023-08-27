@@ -2,7 +2,9 @@ package core
 
 import (
 	"context"
+	"strings"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/memory"
@@ -113,7 +115,7 @@ func extract(
 
 	for _, entry := range tree.Entries {
 
-		if filter(path, excludeGlobs, excludePaths) {
+		if filter(ctx, path+entry.Name, excludeGlobs, excludePaths) {
 			continue
 		}
 
@@ -148,7 +150,33 @@ func extract(
 	}
 }
 
-func filter(path string, excludeGlobs, excludePaths []string) bool {
+func filter(ctx context.Context, path string, excludeGlobs, excludePaths []string) bool {
+	lg := logger.Get(ctx)
+
+	if len(excludeGlobs) > 0 {
+		for _, glob := range excludeGlobs {
+			match, err := doublestar.Match(glob, path)
+			if err != nil {
+				lg.Warn().
+					Err(err).
+					Msgf("failed to use glob %s as exclusion criteria, pattern malformed", glob)
+				continue
+			}
+			if match {
+				return true
+			}
+		}
+	}
+
+	if len(excludePaths) > 0 {
+		for _, excludePath := range excludePaths {
+			// If the path contains the exclude path, then we should exclude it
+			if strings.Contains(path, excludePath) {
+				return true
+			}
+		}
+	}
+
 	return false
 }
 

@@ -3,6 +3,7 @@ module machinelearning.one/sourcemap
 go 1.20
 
 require (
+	github.com/bmatcuk/doublestar/v4 v4.6.0
 	github.com/go-git/go-git/v5 v5.8.1
 	github.com/rs/zerolog v1.30.0
 	github.com/spf13/cobra v1.7.0
