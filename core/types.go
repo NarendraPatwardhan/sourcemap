@@ -16,6 +16,7 @@ type Data struct {
 	size     int64
 	Size     string  `json:"size"`
 	Changes  Changes `json:"changes"`
+	Content  string  `json:"-"`
 	Repr     string  `json:"repr,omitempty"`
 	Children []*Data `json:"children,omitempty"`
 }

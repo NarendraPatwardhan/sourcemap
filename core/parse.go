@@ -138,6 +138,13 @@ func extract(
 				continue
 			}
 
+			contents, err := blob.Contents()
+			if err != nil {
+				lg.Warn().Err(err).Msgf("failed to get contents for %s", path)
+				continue
+			}
+
+			child.Content = contents
 			child.size = blob.Size
 		} else {
 
