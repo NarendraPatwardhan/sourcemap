@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type API struct {
+type Func struct {
 	HTTPMethod   string
 	RelativePath string
 	Handlers     []gin.HandlerFunc

@@ -22,7 +22,7 @@ func createRouter() *gin.Engine {
 }
 
 // Creates and runs a http server suitable for SPA applications.
-func Run(ctx context.Context, port uint, apis ...API) error {
+func Run(ctx context.Context, port uint, spa bool, fns ...Func) error {
 	// Initiate a custom instance of gin router.
 	router := createRouter()
 
@@ -34,32 +34,34 @@ func Run(ctx context.Context, port uint, apis ...API) error {
 				"message": "ok",
 			})
 		})
-		for _, fn := range apis {
+		for _, fn := range fns {
 			api.Handle(fn.HTTPMethod, fn.RelativePath, fn.Handlers...)
 		}
 	}
 
-	// Load the .html files as templates to be served.
-	tmpl := template.Must(
-		template.New("").
-			Delims("{{", "}}").
-			Funcs(router.FuncMap).
-			ParseFS(frontend.Content, "dist/*.html"),
-	)
-	router.SetHTMLTemplate(tmpl)
-	// Serve the index.html file for all routes except the api ones.
-	router.NoRoute(func(c *gin.Context) {
-		if !strings.HasPrefix(c.Request.RequestURI, "/api") {
-			c.HTML(http.StatusOK, "index.html", nil)
-		}
-	})
+	if spa {
+		// Load the .html files as templates to be served.
+		tmpl := template.Must(
+			template.New("").
+				Delims("{{", "}}").
+				Funcs(router.FuncMap).
+				ParseFS(frontend.Content, "dist/*.html"),
+		)
+		router.SetHTMLTemplate(tmpl)
+		// Serve the index.html file for all routes except the api ones.
+		router.NoRoute(func(c *gin.Context) {
+			if !strings.HasPrefix(c.Request.RequestURI, "/api") {
+				c.HTML(http.StatusOK, "index.html", nil)
+			}
+		})
 
-	// Load and serve static content from root.
-	content, err := static.New(frontend.Content, "dist")
-	if err != nil {
-		return err
+		// Load and serve static content from root.
+		content, err := static.New(frontend.Content, "dist")
+		if err != nil {
+			return err
+		}
+		router.Use(static.Serve("/", *content))
 	}
-	router.Use(static.Serve("/", *content))
 
 	// Create a new http server and attach the router to it.
 	srv := &http.Server{

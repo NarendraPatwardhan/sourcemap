@@ -23,7 +23,12 @@ var uiCmd = &cobra.Command{
 		ctx = lg.WithContext(ctx)
 
 		port, _ := cmd.Flags().GetUint("port")
-		lg.Info().Uint("port", port).Msgf("Starting server on port %d", port)
+		api, _ := cmd.Flags().GetBool("api")
+		mode := "spa"
+		if api {
+			mode = "api"
+		}
+		lg.Info().Uint("port", port).Msgf("Starting server on port %d in %s mode", port, mode)
 
 		repo := core.Parse(
 			ctx,
@@ -31,7 +36,7 @@ var uiCmd = &cobra.Command{
 			core.ParseOpts{},
 		)
 
-		sm := server.API{
+		sm := server.Func{
 			HTTPMethod:   "GET",
 			RelativePath: "/sourcemap",
 			Handlers: []gin.HandlerFunc{
@@ -41,11 +46,12 @@ var uiCmd = &cobra.Command{
 			},
 		}
 
-		server.Run(ctx, port, sm)
+		server.Run(ctx, port, !api, sm)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(uiCmd)
 	uiCmd.Flags().UintP("port", "p", 8080, "Port to listen on")
+	uiCmd.Flags().BoolP("api", "a", false, "Whether to serve API only")
 }

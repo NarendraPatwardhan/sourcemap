@@ -10,8 +10,13 @@ refresh:
 	@echo "$(BOLD)Refreshing dependencies...$(RESET)"
 	@go mod tidy
 
-.PHONY: build # Build the project
-build:
+.PHONY: build/ui # Build the UI
+build/ui:
+	@echo "${BOLD}Building UI...${RESET}"
+	@cd frontend && pnpm run build
+
+.PHONY: build/core # Build the project
+build/core: refresh build/ui
 	@echo "${BOLD}Building ${PROJECT}...${RESET}"
 	@go build -o bin/${PROJECT} -ldflags '-s -w'
 
