@@ -123,11 +123,12 @@ func extract(
 		child := &Data{
 			Name: entry.Name,
 			Path: path + entry.Name,
-			Repr: ext.Get(entry.Name),
 		}
 
 		isFile := entry.Mode.IsFile()
 		if isFile {
+
+			child.Repr = ext.Get(entry.Name)
 
 			blob, err := tree.TreeEntryFile(&entry)
 			if err != nil {

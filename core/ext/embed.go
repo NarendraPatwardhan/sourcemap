@@ -23,15 +23,5 @@ func Get(name string) string {
 	frags := strings.Split(strings.ToLower(name), ".")
 	ext := frags[len(frags)-1]
 
-	// Exceptions for non-dot files
-	switch ext {
-	// License and Notice should have the same color as gitignore
-	case "license", "notice":
-		ext = "gitignore"
-	// build and workspace files should have the same color as bzl
-	case "build", "workspace":
-		ext = "bzl"
-	}
-
 	return Map[ext]
 }
