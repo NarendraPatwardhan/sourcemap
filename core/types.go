@@ -3,11 +3,11 @@ package core
 type Repository []*Commit
 
 type Commit struct {
-	Hash    string `json:"hash"`
-	Author  string `json:"author"`
-	Message string `json:"message"`
-	Time    string `json:"time"`
-	Data    *Data  `json:"data"`
+	Hash      string `json:"hash"`
+	Author    string `json:"author"`
+	Message   string `json:"message"`
+	Timestamp string `json:"timestamp"`
+	Data      *Data  `json:"data"`
 }
 
 type Data struct {

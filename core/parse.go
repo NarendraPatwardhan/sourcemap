@@ -25,7 +25,7 @@ func Parse(ctx context.Context, addr string, opts ParseOpts) Repository {
 		Depth: depth,
 	})
 	if err != nil {
-		lg.Fatal().Err(err).Msg("failed to clone repository")
+		lg.Fatal().Err(err).Msgf("failed to clone repository at %s", addr)
 	}
 
 	ref, err := r.Head()
@@ -68,10 +68,10 @@ func Parse(ctx context.Context, addr string, opts ParseOpts) Repository {
 		}
 
 		commit := &Commit{
-			Hash:    co.Hash.String(),
-			Author:  co.Author.Name,
-			Message: co.Message,
-			Time:    co.Author.When.String(),
+			Hash:      co.Hash.String(),
+			Author:    co.Author.Name,
+			Message:   co.Message,
+			Timestamp: co.Author.When.String(),
 		}
 
 		data := &Data{
@@ -86,7 +86,7 @@ func Parse(ctx context.Context, addr string, opts ParseOpts) Repository {
 		}
 
 		extract(ctx, data, tree, data.Path, opts.ExcludeGlobs, opts.ExcludePaths)
-		finalize(ctx, data, statsLookup)
+		gather(ctx, data, statsLookup)
 
 		commit.Data = data
 
@@ -170,7 +170,6 @@ func filter(ctx context.Context, path string, excludeGlobs, excludePaths []strin
 
 	if len(excludePaths) > 0 {
 		for _, excludePath := range excludePaths {
-			// If the path contains the exclude path, then we should exclude it
 			if strings.Contains(path, excludePath) {
 				return true
 			}
@@ -180,9 +179,9 @@ func filter(ctx context.Context, path string, excludeGlobs, excludePaths []strin
 	return false
 }
 
-func finalize(ctx context.Context, data *Data, stats map[string]Changes) {
+func gather(ctx context.Context, data *Data, stats map[string]Changes) {
 	for _, child := range data.Children {
-		finalize(ctx, child, stats)
+		gather(ctx, child, stats)
 		data.Size += child.Size
 		changes, ok := stats[child.Path]
 		if ok {

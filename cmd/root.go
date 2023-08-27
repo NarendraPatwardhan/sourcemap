@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -26,44 +27,19 @@ var rootCmd = &cobra.Command{
 		excludeGlobs, _ := cmd.Flags().GetStringSlice("exclude-globs")
 		excludePaths, _ := cmd.Flags().GetStringSlice("exclude-paths")
 
-		lg.Trace().Msgf("using parse limit %d", limit)
-		lg.Trace().Msgf("using exclude globs %v", excludeGlobs)
-		lg.Trace().Msgf("using exclude paths %v", excludePaths)
-
-		lg.Debug().Msgf("parsing %s", addr)
 		repo := core.Parse(ctx, addr, core.ParseOpts{
 			Limit:        limit,
 			ExcludeGlobs: excludeGlobs,
 			ExcludePaths: excludePaths,
 		})
 
-		for _, commit := range repo {
-			lg.Info().Msgf("commit %s: %s", commit.Hash, commit.Message)
-			print(*commit.Data, 0)
+		repoJSON, err := json.MarshalIndent(repo, "", "  ")
+		if err != nil {
+			lg.Fatal().Err(err).Msg("failed to marshal repo")
 		}
+
+		fmt.Println(string(repoJSON))
 	},
-}
-
-func print(data core.Data, indent int) {
-	fmt.Printf(
-		"%s%s : %d +%d -%d\n",
-		indentStr(indent),
-		data.Name,
-		data.Size,
-		data.Changes.Addition,
-		data.Changes.Deletion,
-	)
-	for _, child := range data.Children {
-		print(*child, indent+1)
-	}
-}
-
-func indentStr(indent int) string {
-	var str string
-	for i := 0; i < indent; i++ {
-		str += "  "
-	}
-	return str
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
