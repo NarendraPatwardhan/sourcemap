@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 
 	"machinelearning.one/sourcemap/compose/logger"
@@ -21,7 +24,19 @@ var uiCmd = &cobra.Command{
 		port, _ := cmd.Flags().GetUint("port")
 		lg.Info().Uint("port", port).Msgf("Starting server on port %d", port)
 
-		server.Run(ctx, port)
+		sm := server.API{
+			HTTPMethod:   "GET",
+			RelativePath: "/sourcemap",
+			Handlers: []gin.HandlerFunc{
+				func(c *gin.Context) {
+					c.JSON(http.StatusOK, gin.H{
+						"message": "ok",
+					})
+				},
+			},
+		}
+
+		server.Run(ctx, port, sm)
 	},
 }
 

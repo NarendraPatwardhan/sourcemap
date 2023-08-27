@@ -22,7 +22,7 @@ func createRouter() *gin.Engine {
 }
 
 // Creates and runs a http server suitable for SPA applications.
-func Run(ctx context.Context, port uint) error {
+func Run(ctx context.Context, port uint, apis ...API) error {
 	// Initiate a custom instance of gin router.
 	router := createRouter()
 
@@ -34,6 +34,9 @@ func Run(ctx context.Context, port uint) error {
 				"message": "ok",
 			})
 		})
+		for _, fn := range apis {
+			api.Handle(fn.HTTPMethod, fn.RelativePath, fn.Handlers...)
+		}
 	}
 
 	// Load the .html files as templates to be served.
