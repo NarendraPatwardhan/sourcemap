@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"os"
 	"strings"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	"machinelearning.one/sourcemap/compose/static"
@@ -25,6 +27,18 @@ func createRouter() *gin.Engine {
 func Run(ctx context.Context, port uint, spa bool, fns ...Func) error {
 	// Initiate a custom instance of gin router.
 	router := createRouter()
+	if !spa {
+		devURL := os.Getenv("VITE_FRONTEND_URL")
+		if devURL == "" {
+			devURL = "http://localhost:8000"
+		}
+		router.Use(cors.New(cors.Config{
+			AllowOrigins:     []string{devURL},
+			AllowMethods:     []string{"GET", "POST"},
+			AllowHeaders:     []string{"*"},
+			AllowCredentials: true,
+		}))
+	}
 
 	// Create a group for all api routes.
 	api := router.Group("/api")

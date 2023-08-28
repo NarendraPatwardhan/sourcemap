@@ -25,10 +25,10 @@ var uiCmd = &cobra.Command{
 		lg := logger.New(lvl)
 		ctx = lg.WithContext(ctx)
 
+		godotenv.Load()
+
 		port, _ := cmd.Flags().GetUint("port")
 		if port == 0 {
-			// load from .env file
-			godotenv.Load()
 			portString := os.Getenv("VITE_API_PORT")
 			parsed, err := strconv.Atoi(portString)
 			if err != nil {
@@ -43,7 +43,7 @@ var uiCmd = &cobra.Command{
 		if api {
 			mode = "api"
 		}
-		lg.Info().Uint("port", port).Msgf("Starting server on port %d in %s mode", port, mode)
+		lg.Info().Msgf("Starting server on port %d in %s mode", port, mode)
 
 		repo := core.Parse(
 			ctx,
