@@ -11,6 +11,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
+	"machinelearning.one/sourcemap/compose/logger"
 	"machinelearning.one/sourcemap/compose/static"
 	"machinelearning.one/sourcemap/frontend"
 )
@@ -24,16 +25,18 @@ func createRouter() *gin.Engine {
 }
 
 // Creates and runs a http server suitable for SPA applications.
-func Run(ctx context.Context, port uint, spa bool, fns ...Func) error {
+func Run(ctx context.Context, port uint, decoupled bool, fns ...Func) error {
+	lg := logger.Get(ctx)
+
 	// Initiate a custom instance of gin router.
 	router := createRouter()
-	if !spa {
-		devURL := os.Getenv("VITE_FRONTEND_URL")
-		if devURL == "" {
-			devURL = "http://localhost:8000"
+	if decoupled {
+		frontendPort := os.Getenv("SOURCEMAP_FRONTEND_PORT")
+		if frontendPort == "" {
+			lg.Fatal().Msg("SOURCEMAP_FRONTEND_PORT not set")
 		}
 		router.Use(cors.New(cors.Config{
-			AllowOrigins:     []string{devURL},
+			AllowOrigins:     []string{fmt.Sprintf("http://localhost:%s", frontendPort)},
 			AllowMethods:     []string{"GET", "POST"},
 			AllowHeaders:     []string{"*"},
 			AllowCredentials: true,
@@ -53,7 +56,7 @@ func Run(ctx context.Context, port uint, spa bool, fns ...Func) error {
 		}
 	}
 
-	if spa {
+	if !decoupled {
 		// Load the .html files as templates to be served.
 		tmpl := template.Must(
 			template.New("").

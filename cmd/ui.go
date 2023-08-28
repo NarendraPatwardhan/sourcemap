@@ -28,22 +28,26 @@ var uiCmd = &cobra.Command{
 		godotenv.Load()
 
 		port, _ := cmd.Flags().GetUint("port")
+		decoupled, _ := cmd.Flags().GetBool("decoupled")
+
+		mode := "integrated"
+		if decoupled {
+			mode = "decoupled"
+		}
+
+		if decoupled && port != 0 {
+			lg.Fatal().
+				Msg("Cannot specify port manually when running in decoupled mode, use SOURCEMAP_API_PORT instead")
+		}
 		if port == 0 {
-			portString := os.Getenv("VITE_API_PORT")
+			portString := os.Getenv("SOURCEMAP_API_PORT")
 			parsed, err := strconv.Atoi(portString)
 			if err != nil {
-				port = 8080
+				lg.Fatal().Err(err).Msg("Could not parse SOURCEMAP_API_PORT")
 			} else {
 				port = uint(parsed)
 			}
 		}
-
-		api, _ := cmd.Flags().GetBool("api")
-		mode := "spa"
-		if api {
-			mode = "api"
-		}
-		lg.Info().Msgf("Starting server on port %d in %s mode", port, mode)
 
 		repo := core.Parse(
 			ctx,
@@ -61,12 +65,13 @@ var uiCmd = &cobra.Command{
 			},
 		}
 
-		server.Run(ctx, port, !api, sm)
+		lg.Info().Msgf("Starting server on port %d in %s mode", port, mode)
+		server.Run(ctx, port, decoupled, sm)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(uiCmd)
 	uiCmd.Flags().UintP("port", "p", 0, "Port to listen on")
-	uiCmd.Flags().BoolP("api", "a", false, "Whether to serve API only")
+	uiCmd.Flags().BoolP("decoupled", "d", false, "Whether to run API server only")
 }
