@@ -2,8 +2,11 @@ package cmd
 
 import (
 	"net/http"
+	"os"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 
 	"machinelearning.one/sourcemap/compose/logger"
@@ -23,6 +26,18 @@ var uiCmd = &cobra.Command{
 		ctx = lg.WithContext(ctx)
 
 		port, _ := cmd.Flags().GetUint("port")
+		if port == 0 {
+			// load from .env file
+			godotenv.Load()
+			portString := os.Getenv("VITE_API_PORT")
+			parsed, err := strconv.Atoi(portString)
+			if err != nil {
+				port = 8080
+			} else {
+				port = uint(parsed)
+			}
+		}
+
 		api, _ := cmd.Flags().GetBool("api")
 		mode := "spa"
 		if api {
@@ -52,6 +67,6 @@ var uiCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(uiCmd)
-	uiCmd.Flags().UintP("port", "p", 8080, "Port to listen on")
+	uiCmd.Flags().UintP("port", "p", 0, "Port to listen on")
 	uiCmd.Flags().BoolP("api", "a", false, "Whether to serve API only")
 }

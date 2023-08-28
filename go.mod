@@ -6,6 +6,7 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.6.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-git/go-git/v5 v5.8.1
+	github.com/joho/godotenv v1.5.1
 	github.com/rs/zerolog v1.30.0
 	github.com/spf13/cobra v1.7.0
 	golang.org/x/sys v0.10.0
