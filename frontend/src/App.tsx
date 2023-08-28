@@ -4,13 +4,22 @@ import type { Commit, Repository } from "./types";
 
 const App = () => {
   const [data, setData] = useState<Repository>([]);
-  const [repositoryAddress, setRepositoryAddress] = useState("");
+  const [repositoryAddress, setRepositoryAddress] = useState(
+    "https://github.com/NarendraPatwardhan/sourcemap.git",
+  );
 
   const fetchData = async () => {
     const FETCH_URL = `${API_URL}/sourcemap`;
 
     try {
-      const response = await fetch(FETCH_URL);
+      const body = JSON.stringify({ address: repositoryAddress });
+      const response = await fetch(FETCH_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: body,
+      });
       const jsonData = await response.json();
       setData(jsonData);
     } catch (error) {

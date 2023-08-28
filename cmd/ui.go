@@ -49,17 +49,29 @@ var uiCmd = &cobra.Command{
 			}
 		}
 
-		repo := core.Parse(
-			ctx,
-			"https://github.com/NarendraPatwardhan/sourcemap.git",
-			core.ParseOpts{},
-		)
-
 		sm := server.Func{
-			HTTPMethod:   "GET",
+			HTTPMethod:   "POST",
 			RelativePath: "/sourcemap",
 			Handlers: []gin.HandlerFunc{
 				func(c *gin.Context) {
+					// Parse the request body as generic json
+					var body struct {
+						Address string `json:"address"`
+					}
+					err := c.BindJSON(&body)
+					if err != nil {
+						c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+						return
+					}
+
+					repo := core.Parse(
+						ctx,
+						body.Address,
+						core.ParseOpts{
+							Limit: 10,
+						},
+					)
+
 					c.JSON(http.StatusOK, repo)
 				},
 			},
