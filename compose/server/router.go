@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	"machinelearning.one/sourcemap/compose/logger"
@@ -24,6 +23,22 @@ func createRouter() *gin.Engine {
 	return engine
 }
 
+func corsMiddleware(url string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", url)
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+
+		c.Next()
+	}
+}
+
 // Creates and runs a http server suitable for SPA applications.
 func Run(ctx context.Context, port uint, decoupled bool, fns ...Func) error {
 	lg := logger.Get(ctx)
@@ -35,12 +50,7 @@ func Run(ctx context.Context, port uint, decoupled bool, fns ...Func) error {
 		if frontendPort == "" {
 			lg.Fatal().Msg("SOURCEMAP_FRONTEND_PORT not set")
 		}
-		router.Use(cors.New(cors.Config{
-			AllowOrigins:     []string{fmt.Sprintf("http://localhost:%s", frontendPort)},
-			AllowMethods:     []string{"GET", "POST"},
-			AllowHeaders:     []string{"*"},
-			AllowCredentials: true,
-		}))
+		router.Use(corsMiddleware(fmt.Sprintf("http://localhost:%s", frontendPort)))
 	}
 
 	// Create a group for all api routes.

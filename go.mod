@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	github.com/bmatcuk/doublestar/v4 v4.6.0
-	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-git/go-git/v5 v5.8.1
 	github.com/joho/godotenv v1.5.1
