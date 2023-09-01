@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -54,9 +55,11 @@ var uiCmd = &cobra.Command{
 			RelativePath: "/sourcemap",
 			Handlers: []gin.HandlerFunc{
 				func(c *gin.Context) {
-					// Parse the request body as generic json
 					var body struct {
-						Address string `json:"address"`
+						Address      string `json:"address"`
+						Limit        int    `json:"limit"`
+						ExcludeGlobs string `json:"excludeGlobs"`
+						ExcludePaths string `json:"excludePaths"`
 					}
 					err := c.BindJSON(&body)
 					if err != nil {
@@ -64,11 +67,25 @@ var uiCmd = &cobra.Command{
 						return
 					}
 
+					lg.Trace().Msgf("parsed body: %+v", body)
+
+					excludeGlobs := strings.Split(body.ExcludeGlobs, ",")
+					for i, glob := range excludeGlobs {
+						excludeGlobs[i] = strings.TrimSpace(glob)
+					}
+
+					excludePaths := strings.Split(body.ExcludePaths, ",")
+					for i, path := range excludePaths {
+						excludePaths[i] = strings.TrimSpace(path)
+					}
+
 					repo := core.Parse(
 						ctx,
 						body.Address,
 						core.ParseOpts{
-							Limit: 10,
+							Limit:        body.Limit,
+							ExcludeGlobs: excludeGlobs,
+							ExcludePaths: excludePaths,
 						},
 					)
 
