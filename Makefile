@@ -10,6 +10,12 @@ refresh:
 	@echo "$(BOLD)Refreshing dependencies...$(RESET)"
 	@go mod tidy
 
+.PHONY: setup # Setup the project
+setup:
+	@echo "${BOLD}Setting up the project...${RESET}"
+	@cp .env.example .env
+	@cd frontend && pnpm install
+
 .PHONY: build/ui # Build the UI
 build/ui:
 	@echo "${BOLD}Building UI...${RESET}"
