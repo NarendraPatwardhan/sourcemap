@@ -69,24 +69,35 @@ var uiCmd = &cobra.Command{
 
 					lg.Trace().Msgf("parsed body: %+v", body)
 
-					excludeGlobs := strings.Split(body.ExcludeGlobs, ",")
-					for i, glob := range excludeGlobs {
-						excludeGlobs[i] = strings.TrimSpace(glob)
+					opts := core.ParseOpts{
+						Limit: body.Limit,
 					}
 
-					excludePaths := strings.Split(body.ExcludePaths, ",")
-					for i, path := range excludePaths {
-						excludePaths[i] = strings.TrimSpace(path)
+					if strings.TrimSpace(body.ExcludeGlobs) != "" {
+						excludeGlobs := strings.Split(body.ExcludeGlobs, ",")
+						for i, glob := range excludeGlobs {
+							excludeGlobs[i] = strings.TrimSpace(glob)
+						}
+						if len(excludeGlobs) > 0 {
+							opts.ExcludeGlobs = excludeGlobs
+						}
 					}
+					if strings.TrimSpace(body.ExcludePaths) != "" {
+						excludePaths := strings.Split(body.ExcludePaths, ",")
+						for i, path := range excludePaths {
+							excludePaths[i] = strings.TrimSpace(path)
+						}
+						if len(excludePaths) > 0 {
+							opts.ExcludePaths = excludePaths
+						}
+					}
+
+					lg.Trace().Msgf("parsed opts: %+v", opts)
 
 					repo := core.Parse(
 						ctx,
 						body.Address,
-						core.ParseOpts{
-							Limit:        body.Limit,
-							ExcludeGlobs: excludeGlobs,
-							ExcludePaths: excludePaths,
-						},
+						opts,
 					)
 
 					c.JSON(http.StatusOK, repo)
