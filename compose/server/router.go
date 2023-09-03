@@ -72,7 +72,7 @@ func Run(ctx context.Context, port uint, decoupled bool, fns ...Func) error {
 			template.New("").
 				Delims("{{", "}}").
 				Funcs(router.FuncMap).
-				ParseFS(frontend.Content, "dist/*.html"),
+				ParseFS(frontend.Content, "build/*.html"),
 		)
 		router.SetHTMLTemplate(tmpl)
 		// Serve the index.html file for all routes except the api ones.
@@ -83,7 +83,7 @@ func Run(ctx context.Context, port uint, decoupled bool, fns ...Func) error {
 		})
 
 		// Load and serve static content from root.
-		content, err := static.New(frontend.Content, "dist")
+		content, err := static.New(frontend.Content, "build")
 		if err != nil {
 			return err
 		}
